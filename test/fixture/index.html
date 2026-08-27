@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Harvester Fixture</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, system-ui, sans-serif; color: #1a1a2e; }
+
+  header { position: fixed; top: 0; left: 0; right: 0; height: 64px;
+           display: flex; align-items: center; padding: 0 32px; gap: 24px;
+           background: #ffffff; box-shadow: 0 1px 0 rgba(0,0,0,.12); z-index: 50; }
+  header a { color: #1a1a2e; text-decoration: none; transition: color .2s ease; }
+
+  section { padding: 96px 120px; }
+
+  /* Hero */
+  #hero { margin-top: 64px; background: #f5f7ff; display: flex;
+          flex-direction: column; gap: 32px; }
+  #hero h1 { font-size: 56px; line-height: 64px; font-weight: 700;
+             letter-spacing: -1.12px; margin: 0; }
+  #hero p { font-size: 20px; line-height: 30px; margin: 0; color: #4a4a68; }
+  .cta { display: inline-flex; align-items: center; justify-content: center;
+         padding: 12px 24px; border-radius: 8px; background: #3b5bff;
+         color: #fff; font-weight: 600; width: 160px;
+         transition: background .18s ease; }
+
+  /* Cards — radius and type intentionally differ at mobile; the test suite
+     asserts these deltas are detected. */
+  #features { background: #ffffff; display: flex; flex-direction: column; gap: 48px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .card { background: #ffffff; border: 1px solid #e4e7f2; border-radius: 12px;
+          padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .card h3 { font-size: 20px; line-height: 30px; margin: 0; font-weight: 600; }
+  .card p { font-size: 15px; line-height: 24px; margin: 0; color: #5a5a78; }
+  .card .thumb { width: 100%; aspect-ratio: 16/10; border-radius: 8px;
+                 background: #dfe4f5; object-fit: cover; }
+
+  footer { background: #0f1024; color: #ffffff; padding: 64px 120px; }
+  footer a { color: rgba(255,255,255,.72); }
+
+  @media (max-width: 700px) {
+    section { padding: 48px 20px; }
+    #hero h1 { font-size: 32px; line-height: 40px; letter-spacing: -0.64px; }
+    #hero p  { font-size: 16px; line-height: 24px; }
+    .grid { grid-template-columns: 1fr; gap: 16px; }
+    .card { border-radius: 6px; padding: 16px; }
+    .card h3 { font-size: 16px; line-height: 24px; }
+    footer { padding: 40px 20px; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <a href="/">Fixture</a>
+    <a href="/docs">Docs</a>
+    <a href="/pricing">Pricing</a>
+  </header>
+
+  <section id="hero">
+    <h1>Build faster</h1>
+    <p>A deterministic fixture page used by the harvester test suite.</p>
+    <a class="cta" href="/start">Get started</a>
+  </section>
+
+  <section id="features">
+    <h2>Features</h2>
+    <div class="grid">
+      <div class="card">
+        <img class="thumb" src="/thumb-a.png" alt="Thumbnail A">
+        <h3>First card</h3>
+        <p>Cards change radius and type size at the mobile breakpoint.</p>
+      </div>
+      <div class="card">
+        <img class="thumb" src="/thumb-b.png" alt="Thumbnail B">
+        <h3>Second card</h3>
+        <p>The grid collapses from three columns to one.</p>
+      </div>
+      <div class="card">
+        <img class="thumb" src="/thumb-c.png" alt="Thumbnail C">
+        <h3>Third card</h3>
+        <p>Padding and gap shrink together.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Fixture footer</p>
+    <a href="/legal">Legal</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,15 @@
+node_modules/
+out/
+out-*/
+spec/
+.scratch/
+*.log
+
+# Internal planning doc — contains client project references; not for publication.
+mvp.md
+
+# Harvest artefacts land wherever --out points; these are the common names.
+screenshot-*.png
+shot-*.png
+
+.DS_Store

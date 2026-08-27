@@ -1,0 +1,42 @@
+{
+  "name": "web-design-harvester",
+  "version": "0.1.0",
+  "description": "Harvest a rendered web page (Figma Sites, any URL) into an LLM-readable design spec: block screenshots, distilled computed CSS, design tokens, responsive deltas, and analysed assets.",
+  "type": "module",
+  "bin": {
+    "harvest": "./bin/harvest.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChenYCL/web-design-harvester.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ChenYCL/web-design-harvester/issues"
+  },
+  "homepage": "https://github.com/ChenYCL/web-design-harvester#readme",
+  "keywords": [
+    "figma",
+    "figma-sites",
+    "design-to-code",
+    "playwright",
+    "computed-style",
+    "design-tokens",
+    "screenshot",
+    "mcp",
+    "llm",
+    "web-scraping"
+  ],
+  "scripts": {
+    "harvest": "node ./bin/harvest.mjs",
+    "test": "node --test test/",
+    "test:unit": "node --test --test-name-pattern='^(?!integration)' test/",
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1"
+  }
+}
