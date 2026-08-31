@@ -32,8 +32,11 @@
   ],
   "scripts": {
     "harvest": "node ./bin/harvest.mjs",
-    "test": "node --test test/",
+    "kiwi": "node ./bin/kiwi.mjs",
+    "test": "node --test test/ && node --test test/kiwi/*.spec.js",
     "test:unit": "node --test --test-name-pattern='^(?!integration)' test/",
+    "test:kiwi": "node --test test/kiwi/*.spec.js",
+    "kiwi:setup": "mkdir -p ~/.cache/figma-kiwi && cd ~/.cache/figma-kiwi && npm i ws fzstd kiwi-schema --silent",
     "postinstall": "playwright install chromium"
   },
   "dependencies": {
