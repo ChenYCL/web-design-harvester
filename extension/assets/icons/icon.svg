@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="16" y1="8" x2="112" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B3BFF"/>
+      <stop offset="1" stop-color="#7A5CFF"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="34" y1="30" x2="94" y2="98" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.98"/>
+      <stop offset="1" stop-color="#E8EAFF" stop-opacity="0.92"/>
+    </linearGradient>
+  </defs>
+  <!-- rounded app tile -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bg)"/>
+  <!-- soft highlight -->
+  <path d="M20 34c8-14 28-22 44-22 6 0 12 .8 18 2.4C58 22 36 36 28 58c-2 6-3 12-3 18-10-12-10-28-5-42z" fill="#fff" opacity=".12"/>
+  <!-- browser / site card -->
+  <rect x="30" y="34" width="68" height="52" rx="10" fill="url(#glass)"/>
+  <rect x="30" y="34" width="68" height="14" rx="10" fill="#5B5CFF" opacity=".18"/>
+  <circle cx="40" cy="41" r="2.2" fill="#5B5CFF" opacity=".55"/>
+  <circle cx="48" cy="41" r="2.2" fill="#5B5CFF" opacity=".35"/>
+  <circle cx="56" cy="41" r="2.2" fill="#5B5CFF" opacity=".22"/>
+  <!-- content bars -->
+  <rect x="38" y="56" width="36" height="5" rx="2.5" fill="#5B5CFF" opacity=".55"/>
+  <rect x="38" y="66" width="28" height="5" rx="2.5" fill="#5B5CFF" opacity=".32"/>
+  <!-- export arrow into pack -->
+  <path d="M78 58v10h-6l8 10 8-10h-6V58h-4z" fill="#3B3BFF"/>
+  <rect x="72" y="84" width="24" height="18" rx="4" fill="#FFFFFF" opacity=".95"/>
+  <path d="M76 84h16l4 5H72l4-5z" fill="#C9CDFF"/>
+  <rect x="78" y="92" width="12" height="3" rx="1.5" fill="#5B5CFF" opacity=".55"/>
+</svg>

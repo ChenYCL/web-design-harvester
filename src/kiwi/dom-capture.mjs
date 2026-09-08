@@ -2,7 +2,7 @@
 // trigger Preview, find the preview iframe target, inject the harvest agent.
 import { writeFileSync, readFileSync } from 'fs';
 
-const FILE_KEY = process.argv[2] || 'oqjgSk2zVtR18Z1kXfU2DS';
+const FILE_KEY = process.argv[2] || process.env.FIGMA_FILE_KEY || '';
 const OUT = process.argv[3] || 'rehearsal/dom-package/dom.json';
 const CDP = 'http://127.0.0.1:9222';
 

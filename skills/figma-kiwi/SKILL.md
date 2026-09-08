@@ -1,4 +1,4 @@
-# figma-kiwi — Figma Sites 逆向双管线
+# figma-kiwi — Figma Sites 逆向三管线
 
 > 通过逆向 Figma 二进制 wire 协议 + 渲染 DOM 采集，产出 LLM 可直接消费的
 > 完整设计产物包。不依赖 REST 节点端点（Sites 文件 400），不受 Dev Mode 付费限制。
@@ -8,6 +8,34 @@
 - 给 Figma Sites / Make / 普通设计文件的链接，要"还原/复刻/提取设计"
 - 需要全部节点 guid、断点、动效 keyframe、变量 token、CODE_FILE 源码、站点 meta
 - 需要像素级 CSS 真值（computed style）
+
+## 管线 C：预览 bundle（未发布站点的 100% 还原）
+
+**先看这条。** 已发布站点和编辑器预览跑的是同一个渲染器 `SitesRuntime`，只是取数不同：
+
+```js
+env:'published'  →  fetch(`/_json/${bundleId}${route}.json`)
+env:'preview'    →  sendMessage('getPage',{url}) 走 MessagePort → { website, cmsBundle }
+```
+
+`website` 与已发布的 `_index.json` **同构**。抓下来放到已发布路径该在的位置，用同一个
+runtime 以 `env:'published'` 启动，页面就逐像素复现。实测：已发布 bundle 回放对照线上
+**0.0000%** 像素差；预览 bundle 回放差 0.053%，且差异全部来自尚未发布的 183 个文案节点。
+
+```bash
+npm run kiwi:preview -- <FILE_KEY>   # 抓 bundle + 未发布资源 Blob
+npm run kiwi:replay                  # 生成 rehearsal/replay/
+python3 -m http.server -d rehearsal/replay 8900
+```
+
+预览 bundle 比已发布多带：`compiledCode`(2.94MB esbuild)、`globalStyles`(Tailwind v4)、
+`codeFilesystemMetadata`、以及**未发布的页面路由**。
+
+三个坑：hook 要打在**编辑器**顶层页（预览是 OOPIF，`Page.reload` 会被拒）；
+`pushAssetData` 的值是 `Blob`（`JSON.stringify` 变 `{}`）；未发布视频是带签名的
+S3 URL（7 天过期），要缩成 basename 再取字节。
+
+细节见 `docs/make-reverse-notes.md` 的 addendum 与 `docs/rehearsal/REPORT.md`。
 
 ## 双管线架构（为什么是两条）
 
@@ -95,4 +123,4 @@ INSTANCE symbol 嫁接、CODE_INSTANCE(nav) 定义解析。
 
 - CLI: bin/kiwi.mjs / src/kiwi/{cdp,client,decoder,pack,pack-app,dom-capture,images,svg}.mjs
 - 测试: test/kiwi/*.spec.js（43 用例）+ TESTPLAN.md（A/B 对照表）
-- 已验证样例: oqjgSk2zVtR18Z1kXfU2DS（nesTTo Sites，REST 拒读的文件）
+- 已验证样例: 一个真实 Sites 文件（REST 拒读；设 FIGMA_FILE_KEY 指向它）

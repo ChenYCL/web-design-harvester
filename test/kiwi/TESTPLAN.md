@@ -46,5 +46,5 @@
 
 重新捕获大 fixture：
 ```bash
-node bin/kiwi.mjs sync oqjgSk2zVtR18Z1kXfU2DS   # 需要 CDP Chrome + 已登录 Figma tab
+node bin/kiwi.mjs sync <FILE_KEY>   # 需要 CDP Chrome + 已登录 Figma tab
 ```

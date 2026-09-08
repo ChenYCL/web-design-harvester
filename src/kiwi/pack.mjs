@@ -18,7 +18,7 @@ import { createRequire } from 'module';
 import { homedir } from 'os';
 
 const require = createRequire(import.meta.url);
-const FILE_KEY = process.env.FIGMA_FILE_KEY || 'oqjgSk2zVtR18Z1kXfU2DS';
+const FILE_KEY = process.env.FIGMA_FILE_KEY || '';
 const FRAME_DIR = process.env.FIGMA_KIWI_FULLSYNC_DIR || '/tmp/figma_kiwi_sites/fullsync';
 const OUT = process.env.KIWI_PACKAGE_DIR || 'rehearsal/kiwi-package';
 

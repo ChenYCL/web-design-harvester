@@ -95,7 +95,7 @@ describe('css 轴1 — extractCSSFromAPI：A=REST 语义 fixture, B=CSS 映射',
 })
 
 describe('css 轴2 — extractCSSFromKiwi：A=真实 Kiwi 节点形态, B=CSS 映射', () => {
-  // 结构照搬实测 nodeChange（nesTTo 站点解码产物中真实存在的字段形态）
+  // 结构照搬实测 nodeChange（真实 Sites 文件解码产物中存在的字段形态）
   const kiwiNode = {
     guid: { sessionID: 1, localID: 10007 },
     type: 'FRAME',
@@ -112,7 +112,7 @@ describe('css 轴2 — extractCSSFromKiwi：A=真实 Kiwi 节点形态, B=CSS �
     fillPaints: [{ type: 'SOLID', visible: true, color: { r: 1, g: 1, b: 1, a: 0.5 }, opacity: 0.5 }],
     strokePaints: [{ type: 'SOLID', visible: true, color: { r: 0, g: 0, b: 0, a: 1 } }],
     strokeWeight: 1,
-    textData: { characters: 'nesTTo' },
+    textData: { characters: 'Sample' },
     fontName: { family: 'Inter', style: 'Bold' },
     fontSize: 72,
     lineHeight: { value: 72, units: 'PIXELS' },
@@ -145,7 +145,7 @@ describe('css 轴2 — extractCSSFromKiwi：A=真实 Kiwi 节点形态, B=CSS �
     assert.equal(css['line-height'], '72px')
     assert.equal(css['letter-spacing'], '-1.44px')
     assert.equal(css['text-align'], 'center')
-    assert.equal(css.text, 'nesTTo')
+    assert.equal(css.text, 'Sample')
   })
 
   test('border：strokeWeight + strokePaints[0]', () => {

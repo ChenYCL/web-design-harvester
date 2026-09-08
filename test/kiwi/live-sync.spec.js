@@ -15,10 +15,12 @@ import { stealCookies, observeMultiplayerHandshake, findFigmaTab } from '../../s
 
 const HERE = fileURLToPath(new URL('.', import.meta.url))
 const FIX = `${HERE}fixtures`
-const FILE_KEY = process.env.FIGMA_FILE_KEY || 'oqjgSk2zVtR18Z1kXfU2DS'
+const FILE_KEY = process.env.FIGMA_FILE_KEY || ''
 
 // 环境探测：无 CDP 则整组 skip
 async function cdpReady() {
+  // An empty FILE_KEY would make url.includes(FILE_KEY) match every tab.
+  if (!FILE_KEY) return false
   try {
     const res = await fetch('http://127.0.0.1:9222/json', { signal: AbortSignal.timeout(1500) })
     const targets = await res.json()

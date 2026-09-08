@@ -1,45 +1,48 @@
 {
-  "name": "web-design-harvester",
-  "version": "0.1.0",
-  "description": "Harvest a rendered web page (Figma Sites, any URL) into an LLM-readable design spec: block screenshots, distilled computed CSS, design tokens, responsive deltas, and analysed assets.",
+  "name": "figma-sites-harvester",
+  "version": "0.4.0",
+  "description": "Chrome MV3 extension + Kiwi wire toolkit to reverse-pack Figma Sites / Make. Captures the editor preview bundle so unpublished sites replay through the real runtime at pixel parity.",
   "type": "module",
   "bin": {
-    "harvest": "./bin/harvest.mjs"
+    "kiwi": "./bin/kiwi.mjs"
   },
   "engines": {
     "node": ">=18"
   },
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ChenYCL/web-design-harvester.git"
-  },
-  "bugs": {
-    "url": "https://github.com/ChenYCL/web-design-harvester/issues"
-  },
-  "homepage": "https://github.com/ChenYCL/web-design-harvester#readme",
   "keywords": [
     "figma",
     "figma-sites",
+    "figma-make",
+    "kiwi",
+    "chrome-extension",
     "design-to-code",
-    "playwright",
-    "computed-style",
-    "design-tokens",
-    "screenshot",
-    "mcp",
-    "llm",
-    "web-scraping"
+    "preview-bundle",
+    "sites-runtime"
   ],
   "scripts": {
-    "harvest": "node ./bin/harvest.mjs",
     "kiwi": "node ./bin/kiwi.mjs",
-    "test": "node --test test/ && node --test test/kiwi/*.spec.js",
-    "test:unit": "node --test --test-name-pattern='^(?!integration)' test/",
+    "test": "node --test test/kiwi/*.spec.js",
     "test:kiwi": "node --test test/kiwi/*.spec.js",
     "kiwi:setup": "mkdir -p ~/.cache/figma-kiwi && cd ~/.cache/figma-kiwi && npm i ws fzstd kiwi-schema --silent",
-    "postinstall": "playwright install chromium"
+    "extension:build": "node extension/scripts/build.mjs",
+    "extension:test-pack": "node extension/scripts/test-pack.mjs",
+    "extension:export": "node --experimental-websocket extension/scripts/cdp-export.mjs",
+    "extension:debug-server": "node extension/scripts/debug-server.mjs",
+    "test:e2e:preview": "MAX_DIFF_PCT=${MAX_DIFF_PCT:-20} node --experimental-websocket test/e2e/preview-restore.mjs",
+    "kiwi:preview": "node --experimental-websocket ./bin/kiwi.mjs preview",
+    "kiwi:replay": "node ./bin/kiwi.mjs replay",
+    "test:e2e:replay": "node --experimental-websocket test/e2e/preview-replay.mjs"
   },
   "dependencies": {
+    "fzstd": "^0.1.1",
+    "jszip": "^3.10.1",
+    "kiwi-schema": "^0.5.0",
     "playwright": "^1.62.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0"
   }
 }

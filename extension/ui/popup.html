@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: 0;
+        width: 320px;
+        font: 12px/1.4 ui-sans-serif, system-ui, -apple-system, sans-serif;
+        color: #e8e8f0;
+        background: #1a1a22;
+      }
+      main { padding: 12px; display: grid; gap: 8px; }
+      h1 { margin: 0; font-size: 13px; }
+      p { margin: 0; color: #9aa0b4; }
+      label { color: #c7cbe0; font-size: 11px; }
+      input {
+        width: 100%; box-sizing: border-box; border-radius: 8px; border: 1px solid #3a3a4a;
+        background: #12121a; color: #eee; padding: 8px;
+      }
+      button {
+        border: 0; border-radius: 8px; padding: 10px 12px; cursor: pointer;
+        background: #5b5cff; color: #fff; font-weight: 600;
+      }
+      button.secondary { background: #2a2a36; color: #ddd; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      #status { min-height: 36px; white-space: pre-wrap; }
+      .ok { color: #6dffa8; }
+      .err { color: #ff8f8f; }
+      .bar { height: 8px; border-radius: 999px; background: #2a2a36; overflow: hidden; }
+      .bar > i { display: block; height: 100%; width: 0%; background: #5b5cff; transition: width .2s; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Figma Sites Exporter <small style="opacity:.6">v0.3.2</small></h1>
+      <p>全量在扩展内：Preview site/ + published/ + wire code/scenegraph/anims/assets。</p>
+      <label>Figma Personal Access Token (for assets/images)</label>
+      <input id="token" type="password" placeholder="figd_… stored locally in the extension" />
+      <label>Published site URL (optional, plain HTTPS mirror)</label>
+      <input id="published" type="url" placeholder="https://….figma.site/" />
+      <button class="secondary" id="saveToken">Save token + published URL</button>
+      <div class="bar"><i id="bar"></i></div>
+      <div id="status">Checking…</div>
+      <button id="export">Export ZIP (background)</button>
+      <button class="secondary" id="panel">Show page panel</button>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

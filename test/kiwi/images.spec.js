@@ -12,7 +12,7 @@ import { homedir } from 'node:os'
 import { collectImageHashes, fetchImageMap, downloadImage } from '../../src/kiwi/images.mjs'
 
 const HERE = fileURLToPath(new URL('.', import.meta.url))
-const FILE_KEY = process.env.FIGMA_FILE_KEY || 'oqjgSk2zVtR18Z1kXfU2DS'
+const FILE_KEY = process.env.FIGMA_FILE_KEY || ''
 
 describe('images — hermetic: 收集器 vs 手工字节/正则扫描', () => {
   test('Uint8Array 20 字节 hash → hex（主通道）；string hash 透传（回退）', () => {
@@ -77,9 +77,13 @@ describe('images — hermetic: 收集器 vs 手工字节/正则扫描', () => {
 })
 
 describe('images — live: REST /v1/files/{key}/images（需要 FIGMA_TOKEN + 网络）', () => {
-  const hasToken = !!process.env.FIGMA_TOKEN
+  // A live REST call needs both a token and a file to point it at. Gating on
+  // the token alone made these fail (not skip) once the hardcoded sample key
+  // was removed.
+  const canRun = !!process.env.FIGMA_TOKEN && !!FILE_KEY
+  const why = !process.env.FIGMA_TOKEN ? 'FIGMA_TOKEN 未设置' : 'FIGMA_FILE_KEY 未设置'
 
-  test('REST 映射可用（Sites 文件不受节点端点 400 限制）', { skip: hasToken ? false : 'FIGMA_TOKEN 未设置' }, async () => {
+  test('REST 映射可用（Sites 文件不受节点端点 400 限制）', { skip: canRun ? false : why }, async () => {
     const map = await fetchImageMap(FILE_KEY)
     const keys = Object.keys(map)
     assert.ok(keys.length > 0, 'REST 应返回非空 hash→URL 映射')
@@ -89,7 +93,7 @@ describe('images — live: REST /v1/files/{key}/images（需要 FIGMA_TOKEN + �
     }
   }, { timeout: 30000 })
 
-  test('A/B 闭环：wire 20 字节 hash hex 编码 ⊆ REST 键集（已验证 91/91）', { skip: hasToken ? false : 'FIGMA_TOKEN 未设置' }, async () => {
+  test('A/B 闭环：wire 20 字节 hash hex 编码 ⊆ REST 键集（已验证 91/91）', { skip: canRun ? false : why }, async () => {
     const candidates = [process.env.FIGMA_KIWI_FULLSYNC, '/tmp/figma_kiwi_sites/fullsync/fs_0002_3600414b.bin'].filter(Boolean)
     const path = candidates.find(p => { try { return existsSync(p) } catch { return false } })
     if (!path) { console.log('  skip: 大 fixture 不存在'); return }
@@ -109,7 +113,7 @@ describe('images — live: REST /v1/files/{key}/images（需要 FIGMA_TOKEN + �
     assert.equal(missing.length, 0, `未在 REST 映射解析的 hash: ${missing.slice(0, 3).join(', ')}`)
   }, { timeout: 60000 })
 
-  test('签名 URL 可下载为图片字节', { skip: hasToken ? false : 'FIGMA_TOKEN 未设置' }, async () => {
+  test('签名 URL 可下载为图片字节', { skip: canRun ? false : why }, async () => {
     const map = await fetchImageMap(FILE_KEY)
     const first = Object.values(map)[0]
     const { buf } = await downloadImage(first)

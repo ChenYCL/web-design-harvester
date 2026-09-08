@@ -1,0 +1,101 @@
+{
+  "manifest_version": 3,
+  "name": "Figma Sites Exporter",
+  "version": "0.4.0",
+  "description": "Full in-extension reverse pack: preview bundle (unpublished) + site/ + published/ + wire scenegraph/vectors/code/assets.",
+  "action": {
+    "default_title": "Figma Sites Exporter",
+    "default_popup": "ui/popup.html",
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "cookies",
+    "downloads",
+    "tabs",
+    "storage",
+    "webRequest",
+    "scripting",
+    "webNavigation",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://www.figma.com/*",
+    "https://*.figma.com/*",
+    "https://*.figma.site/*",
+    "https://api.figma.com/*",
+    "https://s3-alpha-sig.figma.com/*",
+    "https://*.amazonaws.com/*",
+    "wss://*.figma.com/*",
+    "http://127.0.0.1:8788/*",
+    "http://localhost:8788/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.figma.com/site/*",
+        "https://www.figma.com/make/*",
+        "https://www.figma.com/design/*"
+      ],
+      "js": [
+        "content/hook-early.js",
+        "content/preview-bundle-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.figma.com/site/*",
+        "https://www.figma.com/make/*",
+        "https://www.figma.com/design/*"
+      ],
+      "js": [
+        "content/preview-bundle-bridge.js",
+        "content/debug-bridge.js",
+        "content/editor.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.figma.site/*"
+      ],
+      "js": [
+        "content/preview.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "lib/page-agent.js",
+        "lib/page-sync-inject.js",
+        "lib/read-mp.js",
+        "lib/capture-site.js",
+        "lib/run-capture.js",
+        "lib/interactions.js",
+        "lib/drain-preview.js",
+        "lib/pack-preview-bundle.js"
+      ],
+      "matches": [
+        "https://*.figma.site/*",
+        "https://www.figma.com/*"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 // spec 5 — anims.mjs
 // A（权威）：真实解码的 KEYFRAME / KEYFRAME_TRACK / ANIMATION_PRESET_INSTANCE 原始节点
-//           （字段形态取自 nesTTo 站点 34k 全量解码产物）
+//           （字段形态取自真实 Sites 文件 34k 全量解码产物）
 // B（被测）：distillAnimations 蒸馏描述符
 import { test, describe } from 'node:test'
 import assert from 'node:assert/strict'
