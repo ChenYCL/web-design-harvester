@@ -32,7 +32,9 @@
     "test:e2e:preview": "MAX_DIFF_PCT=${MAX_DIFF_PCT:-20} node --experimental-websocket test/e2e/preview-restore.mjs",
     "kiwi:preview": "node --experimental-websocket ./bin/kiwi.mjs preview",
     "kiwi:replay": "node ./bin/kiwi.mjs replay",
-    "test:e2e:replay": "node --experimental-websocket test/e2e/preview-replay.mjs"
+    "test:e2e:replay": "node --experimental-websocket test/e2e/preview-replay.mjs",
+    "kiwi:source": "node ./bin/kiwi.mjs source",
+    "kiwi:sync": "node --experimental-websocket ./bin/kiwi.mjs sync"
   },
   "dependencies": {
     "fzstd": "^0.1.1",

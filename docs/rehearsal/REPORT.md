@@ -1,6 +1,7 @@
-# Rehearsal: restoring a Figma Site from the preview bundle
+# Rehearsal: restoring an unpublished Figma Sites page
 
-Run date: 2026-09-08 · sample file `<FILE_KEY>` (Figma Sites, `editorType: "sites"`)
+Run date: 2026-09-08 · sample file `<FILE_KEY>` (`editorType: "sites"`)
+Target: **`/page-2`** — a page that exists in the editor and has never been published.
 
 ## What was proven
 
@@ -9,97 +10,93 @@ Published Figma Sites and the editor Preview run the **same renderer**
 feed it back into that renderer and the page reproduces exactly — no DOM
 cloning, no computed-style guessing.
 
-| Run | Reference | Pixel difference |
+| Run | Reference | Result |
 |---|---|---|
-| **Control** — published bundle replayed locally | live `<slug>.figma.site` | **0.0000 %** |
-| **Target** — preview bundle replayed locally | live published site | 0.053 % |
+| Control — published bundle replayed locally | live published site | **0.0000 %** pixel difference |
+| `/` — preview bundle replayed locally | live published site | 0.053 %, all unpublished edits |
+| **`/page-2`** — preview bundle replayed locally | never published | renders 1303 elements, 15 images, 16 videos, zero console errors |
 
-The control measuring exactly zero is the important number: it shows the replay
-path itself introduces no error. The 0.053 % on the preview run is not loss — it
-is **183 text nodes that exist in the editor but have not been published yet**
-(`"Decides - What each movement was…"`, `"Reconciled and posted, before you close"`,
-and so on). Restoring content the public site does not have is the point.
+`/page-2` has no public counterpart to diff against, so its verification is
+structural plus visual: 4760 captured nodes hydrate into a page whose hero,
+email capture and dashboard match the design frame exactly.
 
-Screenshots were taken at 1440×900 with `deviceScaleFactor: 1`, so one image
-pixel is one CSS pixel and the diff needs no rescaling. The images are not
-committed — they render a customer site — but the run is reproducible with the
-commands below, and `test:e2e:replay` re-derives the same numbers.
-
-What the control run shows: the replayed page and the live page are
-indistinguishable, down to font rasterisation and video poster frames. The
-difference map is uniformly black.
-
-What the preview run shows: identical layout and chrome, with differences
-confined to copy blocks that carry unpublished edits. The difference map is
-black except for text runs in the lower two thirds of the page.
-
-## How it works
-
-```
-editor (figma.com/site/<KEY>)                 preview iframe (OOPIF)
-  │                                             *-v2-figmaiframepreview.figma.site
-  │  MessageChannel: port2 transferred ──────▶  window.messagePort
-  │
-  │  ◀── { method:'getPage', args:{url:'/'} }
-  ├─────▶ { method:'getPage', return:{ website, cmsBundle } }   ← the scene bundle
-  │
-  ├─────▶ { method:'pushAssetData', args:{ files:{ '<sha1>.svg': Blob } } } × N
-  │                                             └─▶ Service Worker maps
-  │                                                 virtual path → URL
-  ▼
-new SitesRuntime({ env:'preview', getPage, getAssetURL, sendMessage, … })
-```
-
-The published site does the same thing with a different `getPage`:
-
-```js
-// sites-runtime.js, published mode
-defaultGetPage = async (route) =>
-  (await fetch(`/_json/${this.bundleId}${route === '/' ? '/_index' : route}.json`)).json()
-```
-
-So a captured `website` object can be written to `_json/<id>/_index.json` and
-booted with `env:'published'`. That is the whole restore.
-
-## What the preview bundle has that the published one does not
-
-| Key | Published | Preview |
+| | `/` | `/page-2` |
 |---|---|---|
-| `nodeById` | 1990 nodes | **2013 nodes** |
-| `guidToUrl` | 8 routes | **11 routes** (3 unpublished pages) |
-| `compiledCode` | — | 2.94 MB esbuild output |
-| `globalStyles` | — | 15.8 KB Tailwind v4.1.3 |
-| `codeFilesystemMetadata` | — | 40 code-file entries |
-| Assets | public CDN | 176 Blobs pushed over the port |
+| Bundle nodes | 2013 | 4760 |
+| Bundle size | 5.5 MB | 9.7 MB |
+| Pushed asset Blobs | 176 | 743 |
+| `sourceCodeHash` | `a60397c2…` | `2f26cad7…` |
 
-## Reproducing
+## The general method
+
+Route discovery, labelling and verification all come from the data, so the
+procedure does not depend on knowing a site's layout in advance:
+
+1. **Arm** a `MessagePort.prototype.postMessage` hook at `document_start`, then
+   reload so the hook is guaranteed to precede the first message.
+2. **Enumerate** — the first `getPage` reply carries `guidToUrl`, which lists
+   every route including unpublished ones.
+3. **Visit** each route by restoring the editor with `?node-id=<guid>`, polling
+   for the preview control to mount, then clicking it.
+4. **Label from the payload**: `bundle.guidToUrl[bundle.roots[0]]`. Replies
+   carry no request arguments, so a label is never inferred from the request.
+   This doubles as verification — ask for `/page-2`, assert the arriving bundle
+   has `roots[0] === '501:85181'`.
+5. **Drain** that round's `pushAssetData` Blobs before the next reload clears them.
+6. **Record** every route's outcome in `capture-meta.json`; failures carry a
+   reason and are never silently skipped.
 
 ```bash
-# Chrome with the file open and Figma logged in
-/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
-  --remote-debugging-port=9222 --user-data-dir=/tmp/figma-profile
-
-npm run kiwi:preview -- <FILE_KEY>          # capture bundle + asset Blobs
-npm run kiwi:replay                         # build rehearsal/replay/
-python3 -m http.server -d rehearsal/replay 8900
-
-# end-to-end with pixel gate
-npm run test:e2e:replay -- <FILE_KEY> https://<slug>.figma.site/
+npm run kiwi:preview -- <FILE_KEY>          # all routes, or ROUTES='/page-2'
+PUBLISHED_URL=https://<slug>.figma.site npm run kiwi:replay
+node rehearsal/replay/server.mjs            # SPA fallback, :8900
+npm run kiwi:sync -- <FILE_KEY> && npm run kiwi:source
 ```
 
-## Gotchas worth keeping
+## Constraints worth keeping
 
-1. **Hook the editor, not the iframe.** The preview is an out-of-process iframe;
-   `Page.reload` on its own CDP session fails with *"Command can only be executed
-   on top-level targets"*, so a hook cannot reliably be installed before its first
-   paint. The editor tab reloads fine and sends both message types.
-2. **`pushAssetData` values are `Blob`s.** `JSON.stringify` renders them as `{}`
-   and `instanceof ArrayBuffer` is false. Keep the reference, then
-   `await blob.arrayBuffer()` outside the synchronous postMessage patch.
-3. **Unpublished videos are signed S3 URLs**, `X-Amz-Expires=604800`. Reduce to
-   the basename for the runtime and fetch the bytes within 7 days.
-4. **`wasServerRendered: false`** for replay — there is no pre-rendered DOM.
-5. **Cloudflare 403s default tool user agents** on `*.figma.site`. Send a browser
-   UA; `curl` works out of the box, `urllib` does not.
-6. **One `getPage` per route.** Capturing every page means visiting every route
-   in the preview while the hook is armed.
+**The runtime is versioned with the bundle.** `sites-runtime.<sha256>.js` is not
+interchangeable between sites. A mismatch dies inside hydration with
+`TypeError: Cannot convert undefined or null to object` at `Object.entries`.
+Take the runtime from the site's own published host; the builder warns when it
+has to fall back.
+
+**One `getPage` per route.** `_index.json` is only the entry page. Each route is
+a separate fetch with its own `roots`, node set and often its own
+`sourceCodeHash`, so a replay needs one JSON per route plus a matching
+`_components/v2/<hash>.{js,css}` pair.
+
+**The preview control changes shape.** Wide toolbar exposes
+`data-testid="present-sites-full-preview"`; in a narrow window the testid is
+gone. A bare `aria-label="Present"` is the multiplayer spotlight button, not the
+site preview — clicking it produces no port traffic at all, which is how the
+tool tells the two failure modes apart.
+
+**Hook the editor, not the iframe.** The preview is an out-of-process iframe
+whose CDP session rejects `Page.reload` ("Command can only be executed on
+top-level targets"), so a hook cannot reliably precede its first paint there.
+
+**`pushAssetData` values are `Blob`s.** They serialise as `{}` and fail
+`instanceof ArrayBuffer`; keep the reference and `await blob.arrayBuffer()`
+outside the synchronous patch.
+
+**Unpublished videos are signed S3 URLs** (`X-Amz-Expires=604800`). Reduce to the
+basename the runtime requests and fetch the bytes within seven days.
+
+**Cloudflare 403s default tool user agents** on `*.figma.site`; send a browser UA.
+
+## Source for secondary development
+
+`kiwi source` produces an editable package rather than runtime data:
+
+| Folder | Contents |
+|---|---|
+| `code/` | 13 `CODE_FILE` sources off the wire — real TSX including a motion-based `Typewriter.tsx` and two `main.tsx` component trees, plus SVG path modules. `manifest.json` maps runtime virtual paths to files and lists each `CODE_INSTANCE`'s `codeExportName`. |
+| `components/` | `compiledCode` (esbuild) and `globalStyles` (Tailwind v4) per `sourceCodeHash`. |
+| `interactions/` | 254 interactions flattened: 179 `ON_HOVER`, 47 `ON_CLICK`, 28 `ON_PRESS`, with targets, easing and durations. |
+| `design/` | Per-route inventory — `/page-2` alone carries 712 text nodes with geometry and type styles. |
+
+Interactions need no reimplementation in the replay: it runs the same
+`SitesRuntime`, so hover, click and smart-animate behave as designed.
+The table is for porting them elsewhere. Files importing `figma:react` only run
+inside Figma's runtime; ones importing plain `react` are portable as-is.

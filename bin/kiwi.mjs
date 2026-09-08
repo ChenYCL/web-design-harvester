@@ -6,6 +6,7 @@
 //   kiwi dom <fileKey>    attach editor preview iframe, inject harvest agent
 //   kiwi preview <fileKey>  capture the preview getPage bundle + asset Blobs (works unpublished)
 //   kiwi replay [captureDir] rebuild a standalone site from a preview capture
+//   kiwi source [captureDir] [wire.json]  editable source package (code/interactions/design)
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { homedir } from 'os';
 import { createRequire } from 'module';
@@ -61,7 +62,15 @@ if (cmd === 'sync') {
     outDir: process.argv[4] || 'rehearsal/replay',
   });
   console.log(JSON.stringify(report, null, 2));
+} else if (cmd === 'source') {
+  const { packSource } = await import('../src/kiwi/pack-source.mjs');
+  const report = await packSource({
+    captureDir: process.argv[3] || 'rehearsal/preview-capture',
+    wirePath: process.argv[4] || '/tmp/figma_kiwi_scenegraph.json',
+    outDir: process.argv[5] || 'rehearsal/source-package',
+  });
+  console.log(JSON.stringify(report, null, 2));
 } else {
-  console.error('usage: kiwi <sync|pack|pack-app|dom|preview|replay> [fileKey] [dir]');
+  console.error('usage: kiwi <sync|pack|pack-app|dom|preview|replay|source> [fileKey] [dir]');
   process.exit(1);
 }

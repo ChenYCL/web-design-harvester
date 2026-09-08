@@ -415,3 +415,69 @@ See `docs/rehearsal/REPORT.md` for images and the reproduction commands.
   Send a browser UA.
 - Published sites also expose `/_videos/v1/<sha1>` (no extension) — video assets
   are *not* under `/_assets/<ver>/`.
+
+## Multi-route capture and runtime versioning (2026-09-08)
+
+Two constraints that only surface once you go past the first route.
+
+### One `getPage` per route — bundles are not the whole site
+
+`_index.json` carries only the entry page. Other routes are separate fetches:
+
+```
+/_json/<bundleId>/workflow.json    200   (published route)
+/_json/<bundleId>/page-2.json      404   (exists in the editor, never published)
+```
+
+A route bundle has its own `roots`, its own node set, and often its own
+`sourceCodeHash`. On the sample file `/` is 2013 nodes while `/page-2` is 4760.
+
+`guidToUrl` in any bundle enumerates **every** route including unpublished
+ones, so route discovery needs no guessing — read it from the first capture.
+
+### Labelling: replies carry no request arguments
+
+The editor-side hook patches `MessagePort.prototype.postMessage`, which only
+sees what the editor *sends*. The `getPage` request travels the other way (as a
+`message` event), so a reply cannot be attributed from `d.args.url`. Label from
+the payload instead:
+
+```js
+const route = bundle.guidToUrl[bundle.roots[0]]
+```
+
+Self-labelling also verifies the capture: ask for `/page-2`, assert the bundle
+that arrives has `roots[0] === '501:85181'`.
+
+### The runtime is versioned with the bundle
+
+`sites-runtime.<sha256>.js` is not interchangeable between sites. Feeding a
+bundle to a runtime built from a different release dies during hydration:
+
+```
+TypeError: Cannot convert undefined or null to object
+    at Object.entries (<anonymous>)
+    at Ld (sites-runtime.2f352aee….js:11:13389)
+```
+
+Same bundle + the site's own runtime (`0a3d529e…`) renders clean. Take the
+runtime from the site's own published host whenever one exists; only fall back
+to another public site when the file was never published, and expect breakage.
+
+### The preview control is not always the same element
+
+Wide toolbar: `[data-testid="present-sites-full-preview"]`. Narrow window: the
+testid is absent. A bare `aria-label="Present"` is the *multiplayer spotlight*
+button, not the site preview — clicking it opens no preview and no port traffic
+appears. Distinguish the two failure modes by checking whether the port saw any
+message at all:
+
+```
+port saw no messages  -> the control clicked was not the site preview
+port traffic: [...]    -> preview opened but the reply never arrived
+```
+
+### Unpublished assets scale with the page
+
+`/page-2` pushed 743 `pushAssetData` Blobs against 176 for `/`. Drain them per
+round; a reload clears the store.

@@ -45,13 +45,33 @@ npm install
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
   --remote-debugging-port=9222 --user-data-dir=/tmp/figma-profile
 
-npm run kiwi:preview -- <FILE_KEY>     # capture bundle + asset Blobs
+npm run kiwi:preview -- <FILE_KEY>     # every route: bundles + asset Blobs
 npm run kiwi:replay                    # build rehearsal/replay/
-python3 -m http.server -d rehearsal/replay 8900
+node rehearsal/replay/server.mjs       # serves with SPA fallback -> :8900
+
+npm run kiwi:sync -- <FILE_KEY>        # wire sync, for CODE_FILE source
+npm run kiwi:source                    # editable source package
 ```
 
-`kiwi preview` reloads the editor tab with a hook armed, clicks **Full preview**,
-and records the `getPage` reply plus every `pushAssetData` Blob.
+`kiwi preview` is deterministic — it does not depend on knowing the site's
+layout in advance:
+
+1. Arms a `MessagePort.prototype.postMessage` hook at `document_start`, then
+   reloads so the hook is guaranteed to precede the first message.
+2. Captures the first `getPage` reply. Its `guidToUrl` **enumerates every
+   route**, including unpublished ones.
+3. For each route: restores the editor via `?node-id=<guid>`, polls for the
+   preview control to mount (its `data-testid` disappears in a narrow window,
+   so `aria-label="Present"` is matched too), clicks, then polls until a bundle
+   arrives whose `roots[0]` matches that route's guid.
+4. Labels each bundle from its own `roots` → `guidToUrl`. Replies carry no
+   request arguments, so labels are derived from data, never guessed.
+5. Drains that round's `pushAssetData` Blobs before the next reload wipes them.
+6. Writes every route's outcome — captured or failed with the reason — to
+   `capture-meta.json`. Failures are recorded, never silently skipped.
+
+Restrict the run with `ROUTES='/,/page-2'`; tune with `CONTROL_WAIT_MS`,
+`RENDER_WAIT_MS`, `WIN_W`/`WIN_H`.
 
 ## Extension
 
@@ -76,9 +96,27 @@ the editor↔preview traffic from `document_start`, and
 ```bash
 npm run kiwi -- sync <fileKey>      # multiplayer full sync → decoded scenegraph
 npm run kiwi -- pack                # wire frames → lossless package
-npm run kiwi -- preview <fileKey>   # preview bundle + unpublished assets
-npm run kiwi -- replay              # capture → standalone replay site
+npm run kiwi -- preview <fileKey>   # every route's bundle + unpublished assets
+npm run kiwi -- replay              # capture → standalone multi-route replay
+npm run kiwi -- source              # capture + wire → editable source package
 ```
+
+## Source for secondary development
+
+The replay is exact but it is data plus runtime, not code you can refactor.
+`kiwi source` packs what is genuinely editable:
+
+| Folder | Contents |
+|---|---|
+| `code/` | `CODE_FILE.sourceCode` off the wire — unminified TSX/TS. `manifest.json` maps each runtime virtual path to its file and lists every `CODE_INSTANCE`'s `codeExportName`. |
+| `components/` | `compiledCode` (esbuild bundle) and `globalStyles` (Tailwind) as the runtime receives them. |
+| `interactions/` | Every node carrying `interactions`, flattened: event, action, target, easing, duration. |
+| `design/` | Per-route node inventory with text, geometry and type styles. |
+
+Files importing `figma:react` only run inside Figma's runtime; ones importing
+plain `react` are portable as-is. Interactions need no reimplementation in the
+replay — it runs the same `SitesRuntime`, so hover, click and smart-animate
+behave as designed.
 
 ## Tests
 
