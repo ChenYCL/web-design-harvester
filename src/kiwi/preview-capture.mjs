@@ -144,19 +144,21 @@ async function pollUntil(evl, expression, timeoutMs, label) {
  * matched so a failure says why rather than just "not found".
  */
 const FIND_PREVIEW = `(() => {
-  const cands = [...document.querySelectorAll('button,[role="button"],a')];
+  const cands = [...document.querySelectorAll('button,[role="button"],a')].filter(x => !x.closest('#fse-root, #fse-panel'));
   if (cands.some(x => (x.getAttribute('data-testid') || '') === 'present-sites-full-preview')) return 'testid';
   // "Present" alone is the multiplayer spotlight button in some UI states — it
   // is NOT the site preview, so only accept it when the Sites-specific testid
   // is absent AND the label mentions preview.
-  if (cands.some(x => /full preview/i.test((x.getAttribute('aria-label') || '') + ' ' + (x.getAttribute('title') || '')))) return 'aria';
+  const label = x => [x.getAttribute('aria-label'), x.getAttribute('title'), x.innerText].map(v => v || '').join(' ');
+  if (cands.some(x => /full preview/i.test(label(x)))) return 'label';
   return '';
 })()`;
 
 const CLICK_FULL_PREVIEW = `(() => {
-  const cands = [...document.querySelectorAll('button,[role="button"],a')];
+  const cands = [...document.querySelectorAll('button,[role="button"],a')].filter(x => !x.closest('#fse-root, #fse-panel'));
+  const label = x => [x.getAttribute('aria-label'), x.getAttribute('title'), x.innerText].map(v => v || '').join(' ');
   const b = cands.find(x => (x.getAttribute('data-testid') || '') === 'present-sites-full-preview')
-    || cands.find(x => /full preview/i.test((x.getAttribute('aria-label') || '') + ' ' + (x.getAttribute('title') || '')));
+    || cands.find(x => /full preview/i.test(label(x)));
   if (!b) return false;
   b.click(); return true;
 })()`;

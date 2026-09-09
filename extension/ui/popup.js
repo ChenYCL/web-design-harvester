@@ -2,6 +2,7 @@ const statusEl = document.getElementById('status');
 const barEl = document.getElementById('bar');
 const exportBtn = document.getElementById('export');
 const panelBtn = document.getElementById('panel');
+const capturePreviewBtn = document.getElementById('capturePreview');
 const tokenInput = document.getElementById('token');
 const publishedInput = document.getElementById('published');
 const saveTokenBtn = document.getElementById('saveToken');
@@ -56,7 +57,7 @@ async function ensureContentScript(tabId) {
   } catch {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ['content/debug-bridge.js', 'content/editor.js'],
+      files: ['content/preview-bundle-bridge.js', 'content/debug-bridge.js', 'content/editor.js'],
     });
     return true;
   }
@@ -126,3 +127,40 @@ async function refresh() {
 
 refresh();
 setInterval(refresh, 500);
+
+// ---- Preview capture (all routes) ------------------------------------------
+// Deterministic walk: the first bundle's guidToUrl enumerates every route, the
+// bridge visits each via ?node-id=<guid>, and bundles label themselves from
+// their own payload. Progress lands in chrome.storage.local.fsePreviewWalk.
+function renderWalk(p) {
+  if (!p) return;
+  const cls = p.stage === 'error' ? 'err' : p.stage === 'done' ? 'ok' : '';
+  const extra = p.total ? ` (${p.done ?? 0}/${p.total})` : '';
+  setStatus(`[preview:${p.stage}] ${p.message || ''}${extra}`, cls);
+  const map = { start: 5, walk: 40, videos: 70, pack: 85, done: 100, error: 100 };
+  setBar(map[p.stage] ?? 30);
+}
+
+capturePreviewBtn?.addEventListener('click', async () => {
+  try {
+    const tab = await activeFigmaTab();
+    await ensureContentScript(tab.id);
+    capturePreviewBtn.disabled = true;
+    setStatus('[preview:start] Arming capture — the tab will navigate through every route…');
+    const res = await chrome.tabs.sendMessage(tab.id, { type: 'CAPTURE_ALL_ROUTES' });
+    if (!res?.ok) throw new Error(res?.error || 'bridge did not start');
+  } catch (e) {
+    setStatus(String(e?.message || e), 'err');
+    capturePreviewBtn.disabled = false;
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !changes.fsePreviewWalk) return;
+  const p = changes.fsePreviewWalk.newValue;
+  renderWalk(p);
+  if (p && (p.stage === 'done' || p.stage === 'error') && capturePreviewBtn) capturePreviewBtn.disabled = false;
+});
+chrome.storage.local.get(['fsePreviewWalk'], (r) => {
+  if (r.fsePreviewWalk && Date.now() - (r.fsePreviewWalk.at || 0) < 10 * 60 * 1000) renderWalk(r.fsePreviewWalk);
+});

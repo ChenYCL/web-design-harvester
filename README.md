@@ -87,9 +87,28 @@ Open `/site/`, `/make/` or `/design/` and click **Export ZIP**:
 - `code/` — `CODE_FILE` TSX from the wire (editable source truth)
 - `scenegraph.full.json.gz`, `vectors.json`, `animations/`, `assets/`
 
-v0.4.0 adds the preview-bundle channel: `content/preview-bundle-hook.js` records
-the editor↔preview traffic from `document_start`, and
-`CAPTURE_PREVIEW_BUNDLE` returns it packed into the published folder layout.
+**Capture preview → ZIP (all routes)** (v0.5.0) runs the same deterministic
+walk as `kiwi preview` inside the extension: the first bundle's `guidToUrl`
+enumerates every route, the bridge visits each via `?node-id=<guid>` with its
+plan in `sessionStorage` and data in IndexedDB so both survive the navigation,
+and every bundle labels itself from its own payload. The ZIP holds a
+`preview-bundle/` folder with `server.mjs`.
+
+The ZIP is not double-clickable. Unzip, then:
+
+```bash
+cd preview-bundle
+node server.mjs                                          # Published URL saved in popup
+PUBLISHED_URL=https://<slug>.figma.site node server.mjs  # otherwise
+# → http://127.0.0.1:8900/page-2
+```
+
+Three reasons a server is needed: `*.figma.site` sends no CORS headers so the
+extension cannot fetch the runtime (and it must be the site's *own* runtime —
+runtime and bundle are versioned together), the boot is an ES module that
+`file://` refuses, and client routes like `/page-2` need an SPA fallback.
+`server.mjs` fetches runtime, fonts and missing videos once, then serves
+everything locally.
 
 ## CLI
 

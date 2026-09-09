@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Figma Sites Exporter",
-  "version": "0.4.0",
-  "description": "Full in-extension reverse pack: preview bundle (unpublished) + site/ + published/ + wire scenegraph/vectors/code/assets.",
+  "version": "0.5.0",
+  "description": "Reverse-pack Figma Sites / Make: deterministic multi-route preview capture (unpublished sites), site/, published/, wire scenegraph/code/assets.",
   "action": {
     "default_title": "Figma Sites Exporter",
     "default_popup": "ui/popup.html",
@@ -90,7 +90,8 @@
         "lib/run-capture.js",
         "lib/interactions.js",
         "lib/drain-preview.js",
-        "lib/pack-preview-bundle.js"
+        "lib/pack-preview-bundle.js",
+        "lib/zip-store.js"
       ],
       "matches": [
         "https://*.figma.site/*",
